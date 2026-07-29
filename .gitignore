@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+.workbuddy/
+data.json
+data_*.json

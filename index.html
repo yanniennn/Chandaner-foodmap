@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>茶蛋er点评 · 吃好喝好长生不老</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- 左侧输入面板 -->
+  <aside id="inputPanel">
+    <div class="panel-header">
+      <div class="panel-title-wrap">
+        <svg class="panel-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
+        <span class="panel-title">添加美食推荐</span>
+      </div>
+      <button class="panel-collapse-btn" id="collapsePanelBtn" title="收起/展开">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M15 18l-6-6 6-6"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="panel-body" id="panelBody">
+      <div class="form-group">
+        <label>餐厅名称 <span class="req">*</span></label>
+        <input type="text" id="fName" placeholder="如：陶陶居" autocomplete="off">
+        <div class="hint-text" id="nameHint"></div>
+        <div class="search-dropdown" id="searchDropdown"></div>
+      </div>
+
+      <div class="form-group">
+        <label>分类</label>
+        <select id="fCategory">
+          <option value="早茶">早茶</option>
+          <option value="粤菜">粤菜</option>
+          <option value="甜品">甜品</option>
+          <option value="小吃">小吃</option>
+          <option value="火锅">火锅</option>
+          <option value="烧烤">烧烤</option>
+          <option value="海鲜">海鲜</option>
+          <option value="面食">面食</option>
+          <option value="其他">其他</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>推荐人 <span class="req">*</span></label>
+        <input type="text" id="fPerson" placeholder="你的名字" autocomplete="off" list="personList">
+        <datalist id="personList"></datalist>
+      </div>
+
+      <div class="form-group">
+        <label>人均消费（元）</label>
+        <input type="number" id="fPrice" placeholder="如：80" min="0" step="1" autocomplete="off">
+      </div>
+
+      <div class="form-group">
+        <label>推荐菜品</label>
+        <input type="text" id="fDishes" placeholder="用逗号分隔，如：虾饺, 烧卖, 叉烧包" autocomplete="off">
+      </div>
+
+      <div class="form-group">
+        <label>评价</label>
+        <textarea id="fReview" rows="2" placeholder="说说你的用餐体验..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>地址</label>
+        <input type="text" id="fAddress" placeholder="如：荔湾区第十甫路20号" autocomplete="off">
+      </div>
+
+      <div class="form-group">
+        <label>地图位置</label>
+        <div class="location-display" id="locationDisplay">
+          <span class="location-placeholder">输入餐厅名称自动匹配位置</span>
+        </div>
+        <div class="location-btns">
+          <button class="btn btn-sm btn-outline" id="pickLocationBtn">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+            </svg>
+            地图选点
+          </button>
+          <button class="btn btn-sm btn-text" id="clearCoordBtn">清除位置</button>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" id="submitBtn" style="width:100%;justify-content:center">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M20 6L9 17l-5-5"/>
+        </svg>
+        提交推荐
+      </button>
+    </div>
+
+    <!-- API 端口信息 -->
+    <div class="api-section">
+      <div class="api-header" id="apiHeader">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/>
+        </svg>
+        <span>API 数据端口</span>
+        <svg class="api-arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+      </div>
+      <div class="api-body" id="apiBody">
+        <div class="api-endpoint">
+          <span class="api-method get">GET</span>
+          <span class="api-path">/api/data</span>
+        </div>
+        <div class="api-endpoint">
+          <span class="api-method post">POST</span>
+          <span class="api-path">/api/add</span>
+        </div>
+        <div class="api-curl-wrap">
+          <div class="api-curl-label">提交示例 (点击复制)</div>
+          <pre class="api-curl" id="apiCurl">curl -X POST http://127.0.0.1:8080/api/add \
+  -H "Content-Type: application/json" \
+  -d '{"city":"guangzhou","name":"陶陶居","person":"小明","dishes":"虾饺,烧卖","review":"好吃","price":80,"lat":23.12,"lng":113.24,"category":"粤菜"}'</pre>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- 顶部栏 -->
+  <header id="topbar">
+    <div class="topbar-left">
+      <div class="logo-svg" id="logoIcon"></div>
+      <div class="title-wrap">
+        <h1>茶蛋er点评</h1>
+        <span class="subtitle" id="citySubtitle">吃好喝好长生不老</span>
+      </div>
+      <div class="city-tabs" id="cityTabs">
+        <button class="city-tab active" data-city="guangzhou">广州</button>
+        <button class="city-tab" data-city="shenzhen">深圳</button>
+        <button class="city-tab" data-city="foshan">佛山</button>
+      </div>
+    </div>
+    <div class="topbar-center">
+      <div class="search-box">
+        <svg class="search-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+        </svg>
+        <input type="text" id="searchInput" placeholder="搜索店名、菜品、推荐人..." autocomplete="off">
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="live-indicator" id="liveIndicator">
+        <span class="live-dot"></span>
+        <span class="live-text">实时</span>
+      </div>
+      <button class="btn btn-icon" id="menuBtn" title="更多">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/>
+        </svg>
+      </button>
+      <div class="menu-dropdown" id="menuDropdown">
+        <button class="menu-item" id="exportBtn">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          导出数据
+        </button>
+        <button class="menu-item" id="importBtn">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+          导入数据
+        </button>
+        <button class="menu-item" id="sampleBtn">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          加载示例数据
+        </button>
+        <button class="menu-item" id="resetBtn">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+          清空所有数据
+        </button>
+      </div>
+      <input type="file" id="importFile" accept=".json" style="display:none">
+    </div>
+  </header>
+
+  <!-- 地图 -->
+  <div id="map"></div>
+
+  <!-- 选取位置提示 -->
+  <div class="add-hint" id="addHint">
+    <div class="add-hint-inner">
+      <span class="pulse-dot"></span>
+      <span>请在地图上点击美食地点的位置</span>
+      <button class="btn btn-sm btn-text" id="cancelAddBtn">取消</button>
+    </div>
+  </div>
+
+  <!-- 侧边详情面板 -->
+  <aside id="sidebar">
+    <div class="sidebar-header">
+      <button class="close-btn" id="closeSidebar">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="sidebar-body" id="sidebarBody"></div>
+  </aside>
+
+  <!-- 图例 -->
+  <div class="legend" id="legend">
+    <div class="legend-header" id="legendHeader">
+      <span class="legend-title">推荐人</span>
+      <svg class="legend-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+    </div>
+    <div class="legend-body" id="legendBody"></div>
+    <div class="legend-flower-info">
+      <div class="flower-sizes">
+        <div class="flower-size-item">
+          <span class="mini-flower small"></span>
+          <span>1人</span>
+        </div>
+        <div class="flower-size-item">
+          <span class="mini-flower medium"></span>
+          <span>2-3人</span>
+        </div>
+        <div class="flower-size-item">
+          <span class="mini-flower large"></span>
+          <span>4+人</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile FAB -->
+  <button class="fab" id="fabBtn" aria-label="添加推荐">
+    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <path d="M12 5v14M5 12h14"/>
+    </svg>
+  </button>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
