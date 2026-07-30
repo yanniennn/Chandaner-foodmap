@@ -3,7 +3,7 @@ services:
     name: chadaner-foodmap
     runtime: python
     buildCommand: ""
-    startCommand: "python server.py"
+    startCommand: "HOST=0.0.0.0 python server.py"
     envVars:
       - key: PYTHON_VERSION
         value: 3.11

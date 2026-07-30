@@ -341,12 +341,13 @@ class Handler(SimpleHTTPRequestHandler):
 
 
 if __name__ == '__main__':
-    PORT = 8080
+    PORT = int(os.environ.get('PORT', 8080))
+    HOST = os.environ.get('HOST', '127.0.0.1')
     print('')
     print('  ====================================')
-    print('  \U0001F375 茶蛋点评 · 美食地图服务器')
+    print('  \U0001F375 茶蛋er点评 · 美食地图服务器')
     print('  ====================================')
-    print(f'  \U0001F310 网页界面  http://127.0.0.1:{PORT}')
+    print(f'  \U0001F310 网页界面  http://{HOST}:{PORT}')
     print(f'  \U0001F38D 支持城市  广州 / 深圳 / 佛山')
     print(f'  \U0001F4E1 数据端口  GET  /api/data?city=guangzhou')
     print(f'  \U0001F4E4 提交端口  POST /api/add (body含city字段)')
@@ -354,10 +355,10 @@ if __name__ == '__main__':
     print(f'  \u274C 重置端口  POST /api/reset?city=guangzhou')
     print('  ------------------------------------')
     print('  \U0001F4A1 提交示例:')
-    print(f'  curl -X POST http://127.0.0.1:{PORT}/api/add \\')
+    print(f'  curl -X POST http://{HOST}:{PORT}/api/add \\')
     print('    -H "Content-Type: application/json" \\')
     print('    -d \'{"city":"guangzhou","name":"测试餐厅","person":"小明","dishes":"虾饺","review":"好吃","lat":23.13,"lng":113.26,"category":"粤菜"}\'')
     print('  ====================================')
     print('')
-    server = HTTPServer(('127.0.0.1', PORT), Handler)
+    server = HTTPServer((HOST, PORT), Handler)
     server.serve_forever()
