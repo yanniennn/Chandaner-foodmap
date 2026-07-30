@@ -9,14 +9,14 @@
 </head>
 <body>
 
-  <!-- 左侧数据管理面板 -->
+  <!-- 左侧添加推荐面板 -->
   <aside id="inputPanel">
     <div class="panel-header">
       <div class="panel-title-wrap">
         <svg class="panel-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 20h9M12 20V10m0 10l-4-4m4 4l4-4M12 10V4m0 6L8 6m4 4l4-4"/>
         </svg>
-        <span class="panel-title">数据管理</span>
+        <span class="panel-title">添加推荐</span>
       </div>
       <button class="panel-collapse-btn" id="collapsePanelBtn" title="收起/展开">
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
@@ -26,62 +26,89 @@
     </div>
 
     <div class="panel-body" id="panelBody">
-      <div class="info-card">
-        <div class="info-title">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>
-          </svg>
-          如何更新数据
+      <form id="addForm">
+        <div class="form-group">
+          <label>餐厅名称 <span class="req">*</span></label>
+          <input type="text" id="spotName" placeholder="输入店名..." required autocomplete="off">
         </div>
-        <div class="info-content">
-          <p>数据存储在 GitHub 仓库中，直接编辑 JSON 文件即可更新地图。</p>
-          <ol>
-            <li>点击下方的「编辑数据」链接</li>
-            <li>修改对应城市的 <code>data_*.json</code> 文件</li>
-            <li>提交更改后，刷新页面即可看到更新</li>
-          </ol>
+
+        <div class="form-group">
+          <label>详细地址 <span class="req">*</span></label>
+          <input type="text" id="spotAddress" placeholder="输入地址，点击搜索自动定位..." required autocomplete="off">
+          <div class="location-btns" style="margin-top:6px">
+            <button type="button" class="btn btn-outline btn-sm" id="searchAddrBtn">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+              搜索定位
+            </button>
+            <button type="button" class="btn btn-outline btn-sm" id="pickMapBtn">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              地图选点
+            </button>
+          </div>
+          <div class="location-display" id="locationDisplay">
+            <span class="location-placeholder">尚未定位，请搜索地址或在地图上选点</span>
+          </div>
         </div>
-      </div>
 
-      <div class="data-links">
-        <a href="https://github.com/yanniennn/Chandaner-foodmap/blob/main/data_guangzhou.json" target="_blank" class="data-link">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-          </svg>
-          编辑广州数据
-        </a>
-        <a href="https://github.com/yanniennn/Chandaner-foodmap/blob/main/data_shenzhen.json" target="_blank" class="data-link">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-          </svg>
-          编辑深圳数据
-        </a>
-        <a href="https://github.com/yanniennn/Chandaner-foodmap/blob/main/data_foshan.json" target="_blank" class="data-link">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-          </svg>
-          编辑佛山数据
-        </a>
-      </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>分类</label>
+            <select id="spotCategory">
+              <option value="粤菜">粤菜</option>
+              <option value="早茶">早茶</option>
+              <option value="甜品">甜品</option>
+              <option value="小吃">小吃</option>
+              <option value="火锅">火锅</option>
+              <option value="烧烤">烧烤</option>
+              <option value="海鲜">海鲜</option>
+              <option value="面食">面食</option>
+              <option value="其他">其他</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>人均消费</label>
+            <input type="number" id="spotPrice" placeholder="¥" min="0">
+          </div>
+        </div>
 
-      <button class="btn btn-primary" id="refreshDataBtn" style="width:100%;justify-content:center;margin-top:16px">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5">
-          <path d="M23 4v6h-6M1 20v-6h6"/>
-          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-        </svg>
-        刷新数据
-      </button>
+        <div class="form-group">
+          <label>推荐人 <span class="req">*</span></label>
+          <input type="text" id="recPerson" placeholder="你的名字" required autocomplete="off">
+        </div>
 
-      <div class="github-link" style="margin-top:16px;text-align:center">
-        <a href="https://github.com/yanniennn/Chandaner-foodmap" target="_blank" style="color:var(--text-secondary);font-size:12px;text-decoration:none;display:inline-flex;align-items:center;gap:4px">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
-            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-          </svg>
-          查看完整仓库
-        </a>
+        <div class="form-group">
+          <label>推荐菜品</label>
+          <input type="text" id="recDishes" placeholder="多个菜品用逗号分隔，如：虾饺，肠粉" autocomplete="off">
+        </div>
+
+        <div class="form-group">
+          <label>评价</label>
+          <textarea id="recReview" rows="2" placeholder="写几句评价..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>评分</label>
+          <div class="star-picker" id="starPicker">
+            <span class="star" data-val="1">★</span>
+            <span class="star" data-val="2">★</span>
+            <span class="star" data-val="3">★</span>
+            <span class="star" data-val="4">★</span>
+            <span class="star" data-val="5">★</span>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="submitBtn" style="width:100%;justify-content:center;margin-top:4px">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          提交推荐
+        </button>
+        <div class="hint-text" id="formHint"></div>
+      </form>
+
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border-light)">
+        <div style="font-size:11px;color:var(--text-muted);line-height:1.7">
+          <p>💡 添加的内容保存在当前浏览器，刷新不丢失。</p>
+          <p>如需让所有人看到，请通过菜单「导出数据」更新到 GitHub。</p>
+        </div>
       </div>
     </div>
   </aside>
@@ -119,12 +146,29 @@
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
           刷新数据
         </button>
+        <button class="menu-item" id="exportMenuBtn">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+          导出数据
+        </button>
+        <button class="menu-item" id="clearLocalMenuBtn">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          清空本地数据
+        </button>
       </div>
     </div>
   </header>
 
   <!-- 地图 -->
   <div id="map"></div>
+
+  <!-- 地图选点提示 -->
+  <div class="add-hint" id="addHint">
+    <div class="add-hint-inner">
+      <span class="pulse-dot"></span>
+      <span>点击地图选择位置</span>
+      <button class="btn btn-text" id="cancelPickBtn" style="color:rgba(255,255,255,0.85)">取消</button>
+    </div>
+  </div>
 
   <!-- 侧边详情面板 -->
   <aside id="sidebar">

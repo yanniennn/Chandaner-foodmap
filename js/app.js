@@ -1,6 +1,6 @@
 /**
  * 茶蛋er点评 · 美食地图 - 核心逻辑 (GitHub Pages 纯静态版)
- * 数据从 GitHub raw 文件读取，通过编辑仓库 data_*.json 更新
+ * 数据从 GitHub raw 文件读取 + localStorage 本地增量
  */
 (function () {
   'use strict';
@@ -8,6 +8,9 @@
   // ---- 状态 ----
   let map;
   let markers = {};
+  let pickedLocation = null; // { lat, lng } WGS84
+  let isPickMode = false;
+  let starRating = 0;
 
   // 城市中心坐标
   const CITY_CENTERS = {
@@ -278,8 +281,12 @@
       maxZoom: 18,
     }).addTo(map);
     // 绑定侧边栏关闭到地图点击
-    map.on('click', () => {
-      document.getElementById('sidebar').classList.remove('show');
+    map.on('click', (e) => {
+      if (isPickMode) {
+        handleMapPick(e);
+      } else {
+        document.getElementById('sidebar').classList.remove('show');
+      }
     });
   }
 
@@ -296,7 +303,9 @@
       const recNames = spot.recommendations.map(r => r.person);
       const count = recNames.length;
       if (lower && !spot.name.toLowerCase().includes(lower) &&
-          !spot.category.toLowerCase().includes(lower)) return;
+          !spot.category.toLowerCase().includes(lower) &&
+          !recNames.some(n => n.toLowerCase().includes(lower)) &&
+          !(spot.recommendations || []).some(r => (r.dishes || []).some(d => d.toLowerCase().includes(lower)))) return;
 
       let size = 36;
       if (count === 2) size = 42;
@@ -343,15 +352,13 @@
     const catColor = (CATEGORIES && CATEGORIES[spot.category]) || '#607D8B';
     const personNames = spot.recommendations.map(r => escapeHtml(r.person)).join('、');
     const priceStr = avgPrice > 0 ? ' &middot; \u00A5' + Math.round(avgPrice) + '/人' : '';
-    const wantToGoCount = (spot.wantToGo || []).length;
-    const wantToGoStr = wantToGoCount > 0 ? ' &middot; \u{1F3AF} ' + wantToGoCount + '人想去' : '';
 
     return `
       <div class="mini-popup">
         <div class="mini-popup-name">${escapeHtml(spot.name)}</div>
         <div class="mini-popup-meta">
           <span style="color:${catColor};font-weight:600">${escapeHtml(spot.category)}</span>
-          ${priceStr}${wantToGoStr}
+          ${priceStr}
         </div>
         <div class="mini-popup-persons">${personNames}\u63A8\u8350</div>
         <button class="mini-popup-btn" onclick="window.__showDetail(${spot.id})">\u67E5\u770B\u8BE6\u60C5</button>
@@ -376,6 +383,11 @@
       <div class="spot-detail-meta">
         <span class="meta-chip category" style="background:${catColor}">${escapeHtml(spot.category)}</span>
         ${avgPrice > 0 ? `<span class="meta-chip price">\u00A5${Math.round(avgPrice)}/人</span>` : ''}
+        <span class="meta-chip recommenders">${count}人推荐</span>
+      </div>
+      <div class="spot-detail-recommenders">
+        <span class="recommenders-label">推荐人：</span>
+        <span class="recommenders-names">${personNames}</span>
       </div>
       <div class="spot-detail-address">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:1px">
@@ -385,26 +397,6 @@
       </div>
     `;
 
-    // 想去区域
-    const wantToGo = spot.wantToGo || [];
-    const wtgCount = wantToGo.length;
-    html += `
-      <div class="want-to-go-section">
-        <div class="wtg-header">
-          <span class="wtg-icon">\u{1F3AF}</span>
-          <span class="wtg-title">${wtgCount > 0 ? wtgCount + '人想去这里' : '想去这里'}</span>
-        </div>
-    `;
-    if (wtgCount > 0) {
-      html += '<div class="wtg-names">';
-      wantToGo.forEach(name => {
-        const color = persons[name] || '#999';
-        html += `<span class="wtg-name" style="background:${color}">${escapeHtml(name)}</span>`;
-      });
-      html += '</div>';
-    }
-    html += '</div>';
-
     html += '<div class="detail-section-title">推荐详情</div>';
 
     spot.recommendations.forEach((rec, idx) => {
@@ -413,6 +405,7 @@
         `<span class="dish-badge" style="background:${color}">${escapeHtml(d)}</span>`
       ).join('');
       const priceTag = rec.price > 0 ? `<span class="rec-price">\u00A5${rec.price}/人</span>` : '';
+      const stars = rec.rating ? renderStars(rec.rating) : '';
 
       html += `
         <div class="rec-card" style="border-left-color:${color};animation-delay:${idx * 0.08}s">
@@ -421,7 +414,7 @@
               <span class="person-dot" style="background:${color}"></span>
               <span>${escapeHtml(rec.person)}</span>
             </div>
-            <div class="rec-header-right">${priceTag}</div>
+            <div class="rec-header-right">${stars}${priceTag}</div>
           </div>
           <div class="rec-dishes">${dishBadges}</div>
           ${rec.review ? `<div class="rec-review">${escapeHtml(rec.review)}</div>` : ''}
@@ -432,6 +425,15 @@
 
     body.innerHTML = html;
     document.getElementById('sidebar').classList.add('show');
+  }
+
+  function renderStars(rating) {
+    let html = '<span class="rec-stars">';
+    for (let i = 1; i <= 5; i++) {
+      html += `<span class="${i <= rating ? 'filled' : 'empty'}">★</span>`;
+    }
+    html += '</span>';
+    return html;
   }
 
   // ---- Logo ----
@@ -464,8 +466,221 @@
     renderMarkers();
     renderLegend();
     document.getElementById('sidebar').classList.remove('show');
-    // 更新副标题
     document.getElementById('citySubtitle').textContent = config.name + ' · 吃好喝好长生不老';
+    // 重置表单定位
+    pickedLocation = null;
+    updateLocationDisplay();
+  }
+
+  // ---- 地址搜索（Photon API）----
+  async function performAddressSearch() {
+    const address = document.getElementById('spotAddress').value.trim();
+    if (!address) {
+      showHint('请先输入地址');
+      return;
+    }
+
+    const btn = document.getElementById('searchAddrBtn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> 搜索中...';
+    btn.disabled = true;
+
+    try {
+      const cityName = CITY_CONFIGS[Store.currentCity].name;
+      const query = encodeURIComponent(address + ' ' + cityName);
+      const res = await fetch(`https://photon.komoot.io/api/?q=${query}&limit=5&lang=zh`);
+      const data = await res.json();
+
+      if (data.features && data.features.length > 0) {
+        const best = data.features[0];
+        const [lng, lat] = best.geometry.coordinates;
+        pickedLocation = { lat, lng };
+        updateLocationDisplay();
+
+        // 移动地图到该位置
+        const gcj = wgs84ToGcj02(lng, lat);
+        map.flyTo([gcj.lat, gcj.lng], 16, { duration: 0.6 });
+
+        // 如果地址输入框为空或只是城市名，尝试用返回的地址填充
+        const props = best.properties;
+        const returnedAddr = [props.street, props.district, props.city, props.state]
+          .filter(Boolean).join('，');
+        if (returnedAddr && !document.getElementById('spotAddress').value.includes(props.street || '')) {
+          // 不自动覆盖用户输入，只在用户输入很简短时补充
+        }
+
+        showToast('定位成功', 'success');
+      } else {
+        showToast('未找到该地址，请尝试更详细的描述', 'error');
+      }
+    } catch (e) {
+      console.error('地址搜索失败:', e);
+      showToast('搜索失败，请检查网络', 'error');
+    } finally {
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+    }
+  }
+
+  // ---- 地图选点 ----
+  function enterPickMode() {
+    isPickMode = true;
+    document.getElementById('addHint').classList.add('show');
+    map.getContainer().style.cursor = 'crosshair';
+    showToast('点击地图选择餐厅位置');
+  }
+
+  function exitPickMode() {
+    isPickMode = false;
+    document.getElementById('addHint').classList.remove('show');
+    map.getContainer().style.cursor = '';
+  }
+
+  function handleMapPick(e) {
+    const gcj = e.latlng;
+    const wgs = gcj02ToWgs84(gcj.lng, gcj.lat);
+    pickedLocation = { lat: wgs.lat, lng: wgs.lng };
+    updateLocationDisplay();
+    exitPickMode();
+    showToast('已选择位置', 'success');
+  }
+
+  function updateLocationDisplay() {
+    const el = document.getElementById('locationDisplay');
+    if (pickedLocation) {
+      el.innerHTML = `<span style="color:var(--kapok);font-weight:600">已定位</span> &nbsp;<span style="color:var(--text-muted);font-size:11px">${pickedLocation.lat.toFixed(5)}, ${pickedLocation.lng.toFixed(5)}</span>`;
+      el.classList.add('has-location');
+    } else {
+      el.innerHTML = '<span class="location-placeholder">尚未定位，请搜索地址或在地图上选点</span>';
+      el.classList.remove('has-location');
+    }
+  }
+
+  // ---- 评分选择 ----
+  function setupStarPicker() {
+    const picker = document.getElementById('starPicker');
+    const stars = picker.querySelectorAll('.star');
+    stars.forEach(star => {
+      star.addEventListener('click', () => {
+        starRating = parseInt(star.dataset.val);
+        stars.forEach(s => s.classList.toggle('active', parseInt(s.dataset.val) <= starRating));
+      });
+    });
+  }
+
+  // ---- 表单提交 ----
+  async function submitRecommendation(e) {
+    e.preventDefault();
+
+    const name = document.getElementById('spotName').value.trim();
+    const address = document.getElementById('spotAddress').value.trim();
+    const category = document.getElementById('spotCategory').value;
+    const price = parseInt(document.getElementById('spotPrice').value) || 0;
+    const person = document.getElementById('recPerson').value.trim();
+    const dishesStr = document.getElementById('recDishes').value.trim();
+    const review = document.getElementById('recReview').value.trim();
+
+    if (!name) { showHint('请填写餐厅名称'); return; }
+    if (!address) { showHint('请填写详细地址'); return; }
+    if (!person) { showHint('请填写推荐人'); return; }
+    if (!pickedLocation) { showHint('请先搜索地址或在地图上选点定位'); return; }
+
+    const dishes = dishesStr ? dishesStr.split(/[,，]/).map(d => d.trim()).filter(Boolean) : [];
+    const today = new Date().toISOString().split('T')[0];
+
+    // 检查是否已有同名店铺
+    const existing = Store.findSpotByName(name);
+    let spotData;
+
+    if (existing && existing.name === name) {
+      // 追加到已有店铺
+      spotData = {
+        id: existing.id,
+        name: existing.name,
+        address: existing.address || address,
+        lat: existing.lat || pickedLocation.lat,
+        lng: existing.lng || pickedLocation.lng,
+        category: existing.category || category,
+        recommendations: [{
+          person,
+          dishes,
+          review,
+          price,
+          rating: starRating || undefined,
+          date: today,
+        }],
+      };
+    } else {
+      // 新建店铺
+      spotData = {
+        id: Date.now(),
+        name,
+        address,
+        lat: pickedLocation.lat,
+        lng: pickedLocation.lng,
+        category,
+        recommendations: [{
+          person,
+          dishes,
+          review,
+          price,
+          rating: starRating || undefined,
+          date: today,
+        }],
+      };
+    }
+
+    Store.addLocalSpot(spotData);
+
+    // 重置表单
+    document.getElementById('addForm').reset();
+    pickedLocation = null;
+    starRating = 0;
+    document.querySelectorAll('#starPicker .star').forEach(s => s.classList.remove('active'));
+    updateLocationDisplay();
+    showHint('');
+
+    // 刷新地图
+    renderMarkers();
+    renderLegend();
+
+    // 移动地图到新位置
+    const gcj = wgs84ToGcj02(spotData.lng, spotData.lat);
+    map.flyTo([gcj.lat, gcj.lng], 16, { duration: 0.6 });
+
+    showToast('推荐添加成功！', 'success');
+  }
+
+  function showHint(msg) {
+    const el = document.getElementById('formHint');
+    el.textContent = msg;
+    if (msg) {
+      el.style.color = 'var(--kapok)';
+    }
+  }
+
+  // ---- 导出数据 ----
+  function exportData() {
+    const json = Store.exportData();
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `data_${Store.currentCity}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('数据已导出，请上传到 GitHub 仓库', 'success');
+  }
+
+  // ---- 清空本地数据 ----
+  function clearLocalData() {
+    if (!confirm('确定要清空当前城市的本地添加数据吗？此操作不可恢复。')) return;
+    Store.clearLocalData();
+    renderMarkers();
+    renderLegend();
+    showToast('本地数据已清空', 'success');
   }
 
   // ---- 事件绑定 ----
@@ -480,17 +695,56 @@
       renderMarkers(e.target.value);
     });
 
+    // 侧边栏关闭
+    document.getElementById('closeSidebar').addEventListener('click', () => {
+      document.getElementById('sidebar').classList.remove('show');
+    });
+
+    // 左侧面板收起/展开
+    const collapseBtn = document.getElementById('collapsePanelBtn');
+    collapseBtn.addEventListener('click', () => {
+      document.body.classList.toggle('panel-collapsed');
+    });
+
+    // 菜单
+    const menuBtn = document.getElementById('menuBtn');
+    const menuDropdown = document.getElementById('menuDropdown');
+    menuBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      menuDropdown.classList.toggle('show');
+    });
+    document.addEventListener('click', () => menuDropdown.classList.remove('show'));
+
     // 刷新数据
-    document.getElementById('refreshDataBtn').addEventListener('click', async () => {
-      const btn = document.getElementById('refreshDataBtn');
-      btn.textContent = '刷新中...';
-      btn.disabled = true;
+    document.getElementById('refreshMenuBtn').addEventListener('click', async () => {
       await Store.refresh();
       renderMarkers();
       renderLegend();
-      btn.textContent = '已刷新';
-      setTimeout(() => { btn.textContent = '刷新数据'; btn.disabled = false; }, 1500);
       showToast('数据已刷新', 'success');
+    });
+
+    // 导出数据
+    document.getElementById('exportMenuBtn').addEventListener('click', exportData);
+
+    // 清空本地数据
+    document.getElementById('clearLocalMenuBtn').addEventListener('click', clearLocalData);
+
+    // 表单提交
+    document.getElementById('addForm').addEventListener('submit', submitRecommendation);
+
+    // 地址搜索
+    document.getElementById('searchAddrBtn').addEventListener('click', performAddressSearch);
+
+    // 地图选点
+    document.getElementById('pickMapBtn').addEventListener('click', enterPickMode);
+    document.getElementById('cancelPickBtn').addEventListener('click', exitPickMode);
+
+    // 评分选择
+    setupStarPicker();
+
+    // 图例收起/展开
+    document.getElementById('legendHeader').addEventListener('click', () => {
+      document.getElementById('legend').classList.toggle('collapsed');
     });
   }
 
