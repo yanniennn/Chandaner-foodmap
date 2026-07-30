@@ -5,7 +5,9 @@
     "熊": "#2ECC71",
     "kuku": "#9B59B6",
     "LaVine": "#F39C12",
-    "橘猫": "#1ABC9C"
+    "橘猫": "#1ABC9C",
+    "lzabela": "#E91E63",
+    "天才圆圆": "#673AB7"
   },
   "spots": [
     {
@@ -218,7 +220,102 @@
         }
       ],
       "wantToGo": []
+    },
+    {
+      "id": 12,
+      "name": "顺记冰室",
+      "address": "荔湾区宝华路",
+      "lat": 23.1165555,
+      "lng": 113.236242,
+      "category": "甜品",
+      "recommendations": [
+        {
+          "person": "lzabela",
+          "dishes": [],
+          "review": "",
+          "rating": 5,
+          "price": 0,
+          "date": "2026-07-30"
+        }
+      ],
+      "wantToGo": []
+    },
+    {
+      "id": 13,
+      "name": "上膳汤水·招牌清平白切鸡",
+      "address": "荔湾区清平路",
+      "lat": 23.117,
+      "lng": 113.244,
+      "category": "粤菜",
+      "recommendations": [
+        {
+          "person": "橘猫",
+          "dishes": [],
+          "review": "",
+          "rating": 5,
+          "price": 0,
+          "date": "2026-07-30"
+        }
+      ],
+      "wantToGo": []
+    },
+    {
+      "id": 14,
+      "name": "黄埔花苑酒家",
+      "address": "黄埔区",
+      "lat": 23.10,
+      "lng": 113.47,
+      "category": "粤菜",
+      "recommendations": [
+        {
+          "person": "橘猫",
+          "dishes": [],
+          "review": "",
+          "rating": 5,
+          "price": 0,
+          "date": "2026-07-30"
+        }
+      ],
+      "wantToGo": []
+    },
+    {
+      "id": 15,
+      "name": "兴悦酒家",
+      "address": "越秀区环市中路",
+      "lat": 23.1408098,
+      "lng": 113.2756056,
+      "category": "粤菜",
+      "recommendations": [
+        {
+          "person": "天才圆圆",
+          "dishes": [],
+          "review": "",
+          "rating": 5,
+          "price": 0,
+          "date": "2026-07-30"
+        }
+      ],
+      "wantToGo": []
+    },
+    {
+      "id": 16,
+      "name": "御宝阁",
+      "address": "广州市",
+      "lat": 23.13,
+      "lng": 113.28,
+      "category": "粤菜",
+      "recommendations": [
+        {
+          "person": "天才圆圆",
+          "dishes": [],
+          "review": "",
+          "rating": 5,
+          "price": 0,
+          "date": "2026-07-30"
+        }
+      ],
+      "wantToGo": []
     }
   ],
-  "lastModified": 1785384497.702015
+  "lastModified": 1785389508.978135
 }
