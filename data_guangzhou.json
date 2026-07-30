@@ -1,0 +1,224 @@
+{
+  "persons": {
+    "葱葱": "#E74C3C",
+    "🍃": "#3498DB",
+    "熊": "#2ECC71",
+    "kuku": "#9B59B6",
+    "LaVine": "#F39C12",
+    "橘猫": "#1ABC9C"
+  },
+  "spots": [
+    {
+      "id": 1,
+      "name": "金辉食馆",
+      "address": "同福西路",
+      "lat": 23.10556,
+      "lng": 113.24921,
+      "category": "粤菜",
+      "recommendations": [
+        {
+          "person": "葱葱",
+          "dishes": [
+            "咸蛋鱿鱼"
+          ],
+          "review": "",
+          "rating": 5,
+          "price": 0,
+          "date": "2026-07-29"
+        }
+      ],
+      "wantToGo": []
+    },
+    {
+      "id": 2,
+      "name": "穗香食府",
+      "address": "惠福西路",
+      "lat": 23.12303,
+      "lng": 113.25834,
+      "category": "粤菜",
+      "recommendations": [
+        {
+          "person": "葱葱",
+          "dishes": [],
+          "review": "便宜好吃",
+          "rating": 5,
+          "price": 0,
+          "date": "2026-07-29"
+        }
+      ],
+      "wantToGo": []
+    },
+    {
+      "id": 3,
+      "name": "朱仔记",
+      "address": "江南大道南",
+      "lat": 23.08956,
+      "lng": 113.27317,
+      "category": "粤菜",
+      "recommendations": [
+        {
+          "person": "葱葱",
+          "dishes": [],
+          "review": "创新菜式",
+          "rating": 5,
+          "price": 0,
+          "date": "2026-07-29"
+        }
+      ],
+      "wantToGo": []
+    },
+    {
+      "id": 4,
+      "name": "碗仔翅",
+      "address": "西华路",
+      "lat": 23.13438,
+      "lng": 113.24278,
+      "category": "小吃",
+      "recommendations": [
+        {
+          "person": "葱葱",
+          "dishes": [],
+          "review": "",
+          "rating": 5,
+          "price": 0,
+          "date": "2026-07-29"
+        }
+      ],
+      "wantToGo": []
+    },
+    {
+      "id": 5,
+      "name": "天妇罗",
+      "address": "正佳广场",
+      "lat": 23.13464,
+      "lng": 113.3216,
+      "category": "其他",
+      "recommendations": [
+        {
+          "person": "葱葱",
+          "dishes": [],
+          "review": "",
+          "rating": 5,
+          "price": 0,
+          "date": "2026-07-29"
+        }
+      ],
+      "wantToGo": []
+    },
+    {
+      "id": 6,
+      "name": "啫八",
+      "address": "",
+      "lat": 23.1291,
+      "lng": 113.2644,
+      "category": "粤菜",
+      "recommendations": [
+        {
+          "person": "🍃",
+          "dishes": [],
+          "review": "",
+          "rating": 5,
+          "price": 0,
+          "date": "2026-07-29"
+        }
+      ],
+      "wantToGo": []
+    },
+    {
+      "id": 7,
+      "name": "荡失路桑拿鸡煲",
+      "address": "",
+      "lat": 23.08,
+      "lng": 113.28,
+      "category": "火锅",
+      "recommendations": [
+        {
+          "person": "熊",
+          "dishes": [],
+          "review": "",
+          "rating": 5,
+          "price": 0,
+          "date": "2026-07-29"
+        }
+      ],
+      "wantToGo": []
+    },
+    {
+      "id": 8,
+      "name": "银灯食府",
+      "address": "海珠广场",
+      "lat": 23.1089,
+      "lng": 113.2638,
+      "category": "早茶",
+      "recommendations": [
+        {
+          "person": "kuku",
+          "dishes": [],
+          "review": "",
+          "rating": 5,
+          "price": 0,
+          "date": "2026-07-29"
+        }
+      ],
+      "wantToGo": []
+    },
+    {
+      "id": 9,
+      "name": "侨美",
+      "address": "沙面南街",
+      "lat": 23.10896,
+      "lng": 113.2387,
+      "category": "粤菜",
+      "recommendations": [
+        {
+          "person": "LaVine",
+          "dishes": [],
+          "review": "",
+          "rating": 5,
+          "price": 0,
+          "date": "2026-07-29"
+        }
+      ],
+      "wantToGo": []
+    },
+    {
+      "id": 10,
+      "name": "丘大·恒仔酒家",
+      "address": "",
+      "lat": 23.12,
+      "lng": 113.27,
+      "category": "粤菜",
+      "recommendations": [
+        {
+          "person": "LaVine",
+          "dishes": [],
+          "review": "",
+          "rating": 5,
+          "price": 0,
+          "date": "2026-07-29"
+        }
+      ],
+      "wantToGo": []
+    },
+    {
+      "id": 11,
+      "name": "津津菜馆",
+      "address": "广州市荔湾区龙津西路",
+      "lat": 23.124889,
+      "lng": 113.233151,
+      "category": "粤菜",
+      "recommendations": [
+        {
+          "person": "橘猫",
+          "dishes": [],
+          "review": "",
+          "rating": 5,
+          "price": 0,
+          "date": "2026-07-30"
+        }
+      ],
+      "wantToGo": []
+    }
+  ],
+  "lastModified": 1785384497.702015
+}

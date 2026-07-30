@@ -1,0 +1,27 @@
+{
+  "persons": {
+    "葱葱": "#E74C3C"
+  },
+  "spots": [
+    {
+      "id": 1,
+      "name": "小草糖水",
+      "address": "南海区桂城街道",
+      "lat": 23.045268,
+      "lng": 113.1356,
+      "category": "甜品",
+      "recommendations": [
+        {
+          "person": "葱葱",
+          "dishes": [],
+          "review": "",
+          "rating": 5,
+          "price": 0,
+          "date": "2026-07-29"
+        }
+      ],
+      "wantToGo": []
+    }
+  ],
+  "lastModified": 1785336475.727956
+}
