@@ -1091,9 +1091,69 @@ body.panel-collapsed #topbar { left: 12px; }
   .want-to-go-input-row input { font-size: 16px; }
   .want-to-go-btn { height: 40px; }
 
-  /* ---- Add hint ---- */
-  .add-hint { top: 70px; }
-  .add-hint-inner { padding: 8px 16px; font-size: 12px; }
+/* ---- Data Management Panel (GitHub Pages static version) ---- */
+.info-card {
+  background: var(--cream);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  margin-bottom: 14px;
+  border: 1px solid var(--border-light);
+}
+.info-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+.info-content {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+.info-content p { margin-bottom: 8px; }
+.info-content ol { padding-left: 18px; margin: 0; }
+.info-content ol li { margin-bottom: 4px; }
+.info-content code {
+  background: var(--surface);
+  padding: 1px 4px;
+  border-radius: 4px;
+  font-size: 11px;
+  color: var(--kapok);
+  border: 1px solid var(--border-light);
+}
+
+.data-links {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.data-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-xs);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  transition: var(--transition);
+}
+.data-link:hover {
+  border-color: var(--kapok);
+  color: var(--kapok);
+  background: rgba(214,69,69,0.04);
+}
+
+.github-link a:hover { color: var(--kapok) !important; }
+
+/* ---- Add hint ---- */
+.add-hint { top: 70px; }
+.add-hint-inner { padding: 8px 16px; font-size: 12px; }
 }
 
 @media (max-width: 380px) {
