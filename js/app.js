@@ -134,76 +134,21 @@
     `;
   }
 
-  // ---- 超可爱小狮子 SVG（佛山专用）----
+  // ---- 小狮子 Emoji（佛山专用）----
   function cuteLionSVG(size, names) {
-    const cx = 50, cy = 50;
     const count = Array.isArray(names) ? names.length : 0;
-    const uid = 'clion' + size + 'x' + count;
-
-    let centerText, fontSize;
-    if (count === 0) { centerText = '\u{1F981}'; fontSize = 13; }
-    else if (count === 1) { centerText = escapeHtml(String(names[0]).slice(0, 2)); fontSize = 10; }
-    else if (count === 2) { centerText = escapeHtml(names.map(n => String(n)[0]).join('')); fontSize = 9; }
-    else if (count === 3) { centerText = escapeHtml(names.map(n => String(n)[0]).join('')); fontSize = 8; }
-    else { centerText = escapeHtml(names.slice(0, 3).map(n => String(n)[0]).join('')) + '+' + (count - 3); fontSize = 7; }
-
-    // 超可爱蓬松鬃毛 - 圆润波浪形
-    let mane = '';
-    const manePoints = 16;
-    for (let i = 0; i < manePoints; i++) {
-      const a1 = (i / manePoints) * Math.PI * 2 - Math.PI / 2;
-      const a2 = ((i + 1) / manePoints) * Math.PI * 2 - Math.PI / 2;
-      const mid = (a1 + a2) / 2;
-      const rIn = 25, rOut = 36;
-      const x1 = cx + rIn * Math.cos(a1), y1 = cy + rIn * Math.sin(a1);
-      const x2 = cx + rOut * Math.cos(mid), y2 = cy + rOut * Math.sin(mid);
-      const x3 = cx + rIn * Math.cos(a2), y3 = cy + rIn * Math.sin(a2);
-      const colors = ['#FFCC02', '#FFB300', '#FF9800', '#FF8F00'];
-      const color = colors[i % colors.length];
-      mane += `<path d="M ${x1.toFixed(1)} ${y1.toFixed(1)} Q ${x2.toFixed(1)} ${y2.toFixed(1)} ${x3.toFixed(1)} ${y3.toFixed(1)}" fill="${color}" stroke="#E65100" stroke-width="0.4" opacity="0.95"/>`;
-    }
-
+    // 根据推荐人数微调大小
+    const emojiSize = Math.round(size * 0.55);
     return `
-      <svg width="${size}" height="${size}" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 4px 6px rgba(255,143,0,0.3));">
-        <defs>
-          <radialGradient id="${uid}f" cx="50%" cy="40%"><stop offset="0%" stop-color="#FFF8E1"/><stop offset="50%" stop-color="#FFE082"/><stop offset="100%" stop-color="#FFD54F"/></radialGradient>
-          <radialGradient id="${uid}e" cx="50%" cy="30%"><stop offset="0%" stop-color="#FFECB3"/><stop offset="100%" stop-color="#FFCA28"/></radialGradient>
-          <radialGradient id="${uid}c" cx="50%" cy="50%"><stop offset="0%" stop-color="#FFF9C4"/><stop offset="100%" stop-color="#FFEB3B"/></radialGradient>
-          <radialGradient id="${uid}blush" cx="50%" cy="50%"><stop offset="0%" stop-color="#FFAB91"/><stop offset="100%" stop-color="#FF8A65"/></radialGradient>
-        </defs>
-        ${mane}
-        <!-- 圆耳朵 -->
-        <circle cx="${cx-24}" cy="${cy-20}" r="11" fill="url(#${uid}e)" stroke="#E65100" stroke-width="1"/>
-        <circle cx="${cx+24}" cy="${cy-20}" r="11" fill="url(#${uid}e)" stroke="#E65100" stroke-width="1"/>
-        <circle cx="${cx-24}" cy="${cy-20}" r="6" fill="#FFCC80" opacity="0.9"/>
-        <circle cx="${cx+24}" cy="${cy-20}" r="6" fill="#FFCC80" opacity="0.9"/>
-        <!-- 圆脸 -->
-        <ellipse cx="${cx}" cy="${cy+2}" rx="30" ry="28" fill="url(#${uid}f)" stroke="#E65100" stroke-width="1.2"/>
-        <!-- 大眼睛 -->
-        <ellipse cx="${cx-12}" cy="${cy-2}" rx="11" ry="12" fill="#fff" stroke="#E65100" stroke-width="1"/>
-        <ellipse cx="${cx+12}" cy="${cy-2}" rx="11" ry="12" fill="#fff" stroke="#E65100" stroke-width="1"/>
-        <!-- 瞳孔 -->
-        <circle cx="${cx-11}" cy="${cy-1}" r="6" fill="#3E2723"/>
-        <circle cx="${cx+13}" cy="${cy-1}" r="6" fill="#3E2723"/>
-        <!-- 高光 -->
-        <circle cx="${cx-8}" cy="${cy-4}" r="2.5" fill="#fff" opacity="0.95"/>
-        <circle cx="${cx+16}" cy="${cy-4}" r="2.5" fill="#fff" opacity="0.95"/>
-        <circle cx="${cx-14}" cy="${cy+2}" r="1.5" fill="#fff" opacity="0.7"/>
-        <circle cx="${cx+10}" cy="${cy+2}" r="1.5" fill="#fff" opacity="0.7"/>
-        <!-- 腮红 -->
-        <ellipse cx="${cx-20}" cy="${cy+8}" rx="7" ry="4" fill="url(#${uid}blush)" opacity="0.45"/>
-        <ellipse cx="${cx+20}" cy="${cy+8}" rx="7" ry="4" fill="url(#${uid}blush)" opacity="0.45"/>
-        <!-- 小鼻子 -->
-        <ellipse cx="${cx}" cy="${cy+8}" rx="5" ry="4" fill="#FF8A65" stroke="#E65100" stroke-width="0.5"/>
-        <!-- 微笑嘴 -->
-        <path d="M ${cx-10} ${cy+16} Q ${cx} ${cy+22} ${cx+10} ${cy+16}" fill="none" stroke="#E65100" stroke-width="1.8" stroke-linecap="round"/>
-        <!-- 小舌头 -->
-        <ellipse cx="${cx+3}" cy="${cy+19}" rx="4" ry="2.5" fill="#FF8A80" opacity="0.7"/>
-        <!-- 中心圆 -->
-        <circle cx="${cx}" cy="${cy-2}" r="13" fill="url(#${uid}c)" stroke="#E65100" stroke-width="0.8" opacity="0.95"/>
-        <!-- 中心文字 -->
-        <text x="${cx}" y="${cy+2}" text-anchor="middle" font-size="${fontSize}" font-weight="800" fill="#E65100" class="kapok-text">${centerText}</text>
-      </svg>
+      <div style="width:${size}px;height:${size}px;display:flex;align-items:center;justify-content:center;
+        background:linear-gradient(135deg,#FFD54F 0%,#FFB300 50%,#FF8F00 100%);
+        border-radius:50%;
+        box-shadow:0 3px 8px rgba(255,143,0,0.4),inset 0 -2px 6px rgba(230,81,0,0.2),inset 0 2px 6px rgba(255,236,179,0.5);
+        border:2px solid #FF9800;
+        font-size:${emojiSize}px;
+        line-height:1;">
+        🦁
+      </div>
     `;
   }
 
