@@ -142,26 +142,6 @@ const Store = {
               recNames.add(r.person);
             }
           });
-          // 合并想去
-          const wtgNames = new Set(gs.wantToGo || []);
-          (ls.wantToGo || []).forEach(name => {
-            if (!wtgNames.has(name)) {
-              gs.wantToGo = gs.wantToGo || [];
-              gs.wantToGo.push(name);
-              wtgNames.add(name);
-            }
-          });
-          // 合并评论
-          if (ls.comments && ls.comments.length > 0) {
-            gs.comments = gs.comments || [];
-            const existingIds = new Set(gs.comments.map(c => c.id));
-            ls.comments.forEach(c => {
-              if (!existingIds.has(c.id)) {
-                gs.comments.push(c);
-                existingIds.add(c.id);
-              }
-            });
-          }
           if (ls.address && (!gs.address || gs.address === '地址未填写')) gs.address = ls.address;
           if (ls.lat && ls.lng) {
             gs.lat = ls.lat;
@@ -248,46 +228,6 @@ const Store = {
   // 导出合并后的完整数据（JSON 字符串）
   exportData() {
     return JSON.stringify(this.data, null, 2);
-  },
-
-  // 添加想去的人
-  addWantToGo(spotName, personName) {
-    const ls = this._localData.spots.find(s => s.name === spotName);
-    if (ls) {
-      if (!ls.wantToGo) ls.wantToGo = [];
-      if (!ls.wantToGo.includes(personName)) {
-        ls.wantToGo.push(personName);
-      }
-    } else {
-      const gs = (this._githubData.spots || []).find(s => s.name === spotName);
-      if (gs) {
-        this._localData.spots.push({
-          name: spotName,
-          wantToGo: [personName],
-        });
-      }
-    }
-    this._saveLocal();
-    this._rebuildData();
-  },
-
-  // 添加评论
-  addComment(spotName, commentData) {
-    const ls = this._localData.spots.find(s => s.name === spotName);
-    if (ls) {
-      if (!ls.comments) ls.comments = [];
-      ls.comments.push(commentData);
-    } else {
-      const gs = (this._githubData.spots || []).find(s => s.name === spotName);
-      if (gs) {
-        this._localData.spots.push({
-          name: spotName,
-          comments: [commentData],
-        });
-      }
-    }
-    this._saveLocal();
-    this._rebuildData();
   },
 
   _saveLocal() {

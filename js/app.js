@@ -254,15 +254,13 @@
     const catColor = (CATEGORIES && CATEGORIES[spot.category]) || '#607D8B';
     const personNames = spot.recommendations.map(r => escapeHtml(r.person)).join('、');
     const priceStr = avgPrice > 0 ? ' \u00B7 \u00A5' + Math.round(avgPrice) + '/人' : '';
-    const wtgCount = (spot.wantToGo || []).length;
-    const wtgStr = wtgCount > 0 ? ` \u00B7 \u{1F3AF} ${wtgCount}人想去` : '';
 
     return `
       <div class="mini-popup">
         <div class="mini-popup-name">${escapeHtml(spot.name)}</div>
         <div class="mini-popup-meta">
           <span style="color:${catColor};font-weight:600">${escapeHtml(spot.category)}</span>
-          ${priceStr}${wtgStr}
+          ${priceStr}
         </div>
         <div class="mini-popup-persons">${personNames}\u63A8\u8350</div>
         <button class="mini-popup-btn" onclick="window.__showDetail(${spot.id})">\u67E5\u770B\u8BE6\u60C5</button>
@@ -282,9 +280,6 @@
     const catColor = (CATEGORIES && CATEGORIES[spot.category]) || '#607D8B';
     const persons = Store.getAllPersons();
     const personNames = spot.recommendations.map(r => escapeHtml(r.person)).join('、');
-    const wantToGo = spot.wantToGo || [];
-    const wtgCount = wantToGo.length;
-    const comments = spot.comments || [];
 
     let html = `
       <div class="spot-detail-name">${escapeHtml(spot.name)}</div>
@@ -305,31 +300,6 @@
       </div>
     `;
 
-    // ---- 想去的人 ----
-    html += `
-      <div class="want-to-go-section">
-        <div class="wtg-header">
-          <span class="wtg-icon">\u{1F3AF}</span>
-          <span class="wtg-title">${wtgCount > 0 ? wtgCount + '人想去这里' : '想去这里'}</span>
-        </div>
-    `;
-    if (wtgCount > 0) {
-      html += '<div class="wtg-names">';
-      wantToGo.forEach(name => {
-        const color = persons[name] || '#999';
-        html += `<span class="wtg-name" style="background:${color}">${escapeHtml(name)}</span>`;
-      });
-      html += '</div>';
-    }
-    html += `
-        <div class="wtg-input-row">
-          <input type="text" id="wtgInput" placeholder="输入你的名字..." maxlength="20">
-          <button class="wtg-btn" id="wtgBtn" onclick="window.__addWantToGo()">\u{1F3AF} 想去</button>
-        </div>
-      </div>
-    `;
-
-    // ---- 推荐详情 ----
     html += '<div class="detail-section-title">推荐详情</div>';
 
     spot.recommendations.forEach((rec, idx) => {
@@ -356,38 +326,6 @@
       `;
     });
 
-    // ---- 互动评论区 ----
-    html += '<div class="detail-section-title">\u{1F4AC} 互动留言</div>';
-
-    if (comments.length > 0) {
-      html += '<div class="comments-list">';
-      comments.forEach(c => {
-        html += `
-          <div class="comment-item">
-            <div class="comment-header">
-              <span class="comment-author">${escapeHtml(c.author || '匿名')}</span>
-              <span class="comment-time">${c.date || ''}</span>
-            </div>
-            <div class="comment-body">${escapeHtml(c.content)}</div>
-          </div>
-        `;
-      });
-      html += '</div>';
-    } else {
-      html += '<div class="comments-empty">还没有留言，来抢沙发吧~</div>';
-    }
-
-    html += `
-      <div class="comment-form">
-        <input type="text" id="commentAuthor" placeholder="你的名字（选填）" maxlength="20" class="comment-input">
-        <textarea id="commentContent" placeholder="想说点什么...（选填）" rows="2" class="comment-textarea"></textarea>
-        <button class="btn btn-primary comment-submit" id="commentSubmitBtn" style="width:100%;justify-content:center" onclick="window.__addComment()">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
-          发表留言
-        </button>
-      </div>
-    `;
-
     body.innerHTML = html;
     document.getElementById('sidebar').classList.add('show');
   }
@@ -399,48 +337,6 @@
     }
     html += '</span>';
     return html;
-  }
-
-  // ---- 添加想去 ----
-  function addWantToGo() {
-    if (!currentSpotId) return;
-    const spot = Store.data.spots.find(s => s.id === currentSpotId);
-    if (!spot) return;
-    const input = document.getElementById('wtgInput');
-    const name = (input.value || '').trim();
-    if (!name) { showToast('请输入你的名字', 'error'); return; }
-
-    const current = spot.wantToGo || [];
-    if (current.includes(name)) { showToast('你已经标记过想去啦', 'error'); return; }
-
-    Store.addWantToGo(spot.name, name);
-    showSidebar(currentSpotId);
-    renderMarkers();
-    showToast('已标记想去！', 'success');
-  }
-
-  // ---- 添加评论 ----
-  function addComment() {
-    if (!currentSpotId) return;
-    const spot = Store.data.spots.find(s => s.id === currentSpotId);
-    if (!spot) return;
-
-    const authorInput = document.getElementById('commentAuthor');
-    const contentInput = document.getElementById('commentContent');
-    const author = (authorInput.value || '').trim() || '匿名';
-    const content = (contentInput.value || '').trim();
-    if (!content) { showToast('请输入留言内容', 'error'); return; }
-
-    const comment = {
-      id: Date.now(),
-      author,
-      content,
-      date: new Date().toISOString().split('T')[0],
-    };
-
-    Store.addComment(spot.name, comment);
-    showSidebar(currentSpotId);
-    showToast('留言发表成功！', 'success');
   }
 
   function renderLogo() {
@@ -718,8 +614,6 @@
   }
 
   window.__showDetail = showSidebar;
-  window.__addWantToGo = addWantToGo;
-  window.__addComment = addComment;
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
