@@ -8,50 +8,36 @@
   // ---- 状态 ----
   let map;
   let markers = {};
-  let pickedLocation = null; // { lat, lng } WGS84
+  let pickedLocation = null;
   let isPickMode = false;
   let starRating = 0;
+  let currentSpotId = null;
 
-  // 城市中心坐标
   const CITY_CENTERS = {
     guangzhou: { center: [23.1291, 113.2644], zoom: 12 },
     shenzhen:   { center: [22.5431, 114.0579], zoom: 12 },
     foshan:     { center: [23.0218, 113.1219], zoom: 12 },
   };
 
-  // ---- 吃饭 Logo（品牌主标识）----
+  // ---- 吃饭 Logo ----
   function eatingLogoSVG(size) {
     const uid = 'elogo' + size;
     return `
       <svg width="${size}" height="${size}" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 2px 3px rgba(139,111,71,0.3));">
         <defs>
-          <radialGradient id="${uid}b" cx="50%" cy="30%">
-            <stop offset="0%" stop-color="#FF8A65"/>
-            <stop offset="60%" stop-color="#FF5722"/>
-            <stop offset="100%" stop-color="#D84315"/>
-          </radialGradient>
-          <linearGradient id="${uid}s" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stop-color="#FFF3E0"/>
-            <stop offset="100%" stop-color="#FFE0B2"/>
-          </linearGradient>
-          <radialGradient id="${uid}f" cx="50%" cy="70%">
-            <stop offset="0%" stop-color="#FFAB91"/>
-            <stop offset="100%" stop-color="#FF7043"/>
-          </radialGradient>
+          <radialGradient id="${uid}b" cx="50%" cy="30%"><stop offset="0%" stop-color="#FF8A65"/><stop offset="60%" stop-color="#FF5722"/><stop offset="100%" stop-color="#D84315"/></radialGradient>
+          <linearGradient id="${uid}s" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#FFF3E0"/><stop offset="100%" stop-color="#FFE0B2"/></linearGradient>
+          <radialGradient id="${uid}f" cx="50%" cy="70%"><stop offset="0%" stop-color="#FFAB91"/><stop offset="100%" stop-color="#FF7043"/></radialGradient>
         </defs>
-        <!-- 碗 -->
         <path d="M20 55 Q50 80 80 55 L75 85 Q50 95 25 85 Z" fill="url(#${uid}b)" stroke="#BF360C" stroke-width="1.5"/>
         <ellipse cx="50" cy="55" rx="30" ry="8" fill="url(#${uid}s)" stroke="#BF360C" stroke-width="1.2"/>
-        <!-- 食物 -->
         <circle cx="42" cy="50" r="6" fill="url(#${uid}f)" stroke="#BF360C" stroke-width="0.8"/>
         <circle cx="50" cy="48" r="5.5" fill="url(#${uid}f)" stroke="#BF360C" stroke-width="0.8"/>
         <circle cx="58" cy="50" r="6" fill="url(#${uid}f)" stroke="#BF360C" stroke-width="0.8"/>
         <circle cx="46" cy="44" r="4.5" fill="url(#${uid}f)" stroke="#BF360C" stroke-width="0.8"/>
         <circle cx="54" cy="44" r="4.5" fill="url(#${uid}f)" stroke="#BF360C" stroke-width="0.8"/>
-        <!-- 筷子 -->
         <rect x="32" y="15" width="3" height="42" rx="1.5" fill="#5D4037" transform="rotate(-12 33 36)"/>
         <rect x="40" y="15" width="3" height="42" rx="1.5" fill="#5D4037" transform="rotate(-6 41.5 36)"/>
-        <!-- 蒸汽 -->
         <path d="M40 35 Q42 25 40 18" fill="none" stroke="#FFCC80" stroke-width="2.5" stroke-linecap="round" opacity="0.6"/>
         <path d="M50 33 Q52 23 50 16" fill="none" stroke="#FFCC80" stroke-width="2.5" stroke-linecap="round" opacity="0.6"/>
         <path d="M60 35 Q62 25 60 18" fill="none" stroke="#FFCC80" stroke-width="2.5" stroke-linecap="round" opacity="0.6"/>
@@ -59,7 +45,7 @@
     `;
   }
 
-  // ---- 木棉花 SVG（广州/深圳）----
+  // ---- 木棉花 SVG（广州）----
   function kapokSVG(size, names) {
     const cx = 50, cy = 50;
     const count = Array.isArray(names) ? names.length : 0;
@@ -88,13 +74,7 @@
 
     return `
       <svg width="${size}" height="${size}" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 3px 4px rgba(0,0,0,0.2));">
-        <defs>
-          <radialGradient id="${uid}g" cx="50%" cy="35%">
-            <stop offset="0%" stop-color="#FFCCBC"/>
-            <stop offset="70%" stop-color="#FFAB91"/>
-            <stop offset="100%" stop-color="#FF8A65"/>
-          </radialGradient>
-        </defs>
+        <defs><radialGradient id="${uid}g" cx="50%" cy="35%"><stop offset="0%" stop-color="#FFCCBC"/><stop offset="70%" stop-color="#FFAB91"/><stop offset="100%" stop-color="#FF8A65"/></radialGradient></defs>
         ${petals}
         <circle cx="${cx}" cy="${cy}" r="16" fill="url(#${uid}g)" stroke="#E64A19" stroke-width="1" opacity="0.95"/>
         <text x="${cx}" y="${cy + 4}" text-anchor="middle" font-size="${fontSize}" font-weight="800" fill="#fff" class="kapok-text" style="paint-order: stroke; stroke: #D84315; stroke-width: 0.5;">${centerText}</text>
@@ -118,67 +98,45 @@
     return `
       <svg width="${size}" height="${size}" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 3px 4px rgba(87,60,30,0.35));">
         <defs>
-          <radialGradient id="${uid}g" cx="50%" cy="35%">
-            <stop offset="0%" stop-color="#FFF8E1"/>
-            <stop offset="70%" stop-color="#FFECB3"/>
-            <stop offset="100%" stop-color="#F0D060"/>
-          </radialGradient>
-          <radialGradient id="${uid}n" cx="50%" cy="50%">
-            <stop offset="0%" stop-color="#FFCDD2"/>
-            <stop offset="100%" stop-color="#F48FB1"/>
-          </radialGradient>
-          <radialGradient id="${uid}c" cx="50%" cy="50%">
-            <stop offset="0%" stop-color="#FFD54F"/>
-            <stop offset="100%" stop-color="#FF8F00"/>
-          </radialGradient>
+          <radialGradient id="${uid}g" cx="50%" cy="35%"><stop offset="0%" stop-color="#FFF8E1"/><stop offset="70%" stop-color="#FFECB3"/><stop offset="100%" stop-color="#F0D060"/></radialGradient>
+          <radialGradient id="${uid}n" cx="50%" cy="50%"><stop offset="0%" stop-color="#FFCDD2"/><stop offset="100%" stop-color="#F48FB1"/></radialGradient>
+          <radialGradient id="${uid}c" cx="50%" cy="50%"><stop offset="0%" stop-color="#FFD54F"/><stop offset="100%" stop-color="#FF8F00"/></radialGradient>
         </defs>
-        <!-- 耳朵 -->
         <ellipse cx="${cx-28}" cy="${cy-16}" rx="10" ry="13" fill="#FFECB3" stroke="#8D6E63" stroke-width="0.8" transform="rotate(-25 ${cx-28} ${cy-16})"/>
         <ellipse cx="${cx+28}" cy="${cy-16}" rx="10" ry="13" fill="#FFECB3" stroke="#8D6E63" stroke-width="0.8" transform="rotate(25 ${cx+28} ${cy-16})"/>
         <ellipse cx="${cx-28}" cy="${cy-16}" rx="5" ry="8" fill="#F8BBD0" transform="rotate(-25 ${cx-28} ${cy-16})"/>
         <ellipse cx="${cx+28}" cy="${cy-16}" rx="5" ry="8" fill="#F8BBD0" transform="rotate(25 ${cx+28} ${cy-16})"/>
-        <!-- 牛角 -->
         <path d="M ${cx-20} ${cy-26} Q ${cx-28} ${cy-38} ${cx-22} ${cy-44} Q ${cx-15} ${cy-38} ${cx-12} ${cy-28} Z" fill="#D7A86E" stroke="#8D6E63" stroke-width="0.8"/>
         <path d="M ${cx+20} ${cy-26} Q ${cx+28} ${cy-38} ${cx+22} ${cy-44} Q ${cx+15} ${cy-38} ${cx+12} ${cy-28} Z" fill="#D7A86E" stroke="#8D6E63" stroke-width="0.8"/>
-        <!-- 头部 -->
         <ellipse cx="${cx}" cy="${cy}" rx="30" ry="28" fill="url(#${uid}g)" stroke="#8D6E63" stroke-width="1.2"/>
-        <!-- 斑点 -->
         <ellipse cx="${cx-16}" cy="${cy-10}" rx="7" ry="5" fill="#8D6E63" opacity="0.25" transform="rotate(-15 ${cx-16} ${cy-10})"/>
         <ellipse cx="${cx+12}" cy="${cy-14}" rx="5" ry="7" fill="#8D6E63" opacity="0.25" transform="rotate(20 ${cx+12} ${cy-14})"/>
         <ellipse cx="${cx-8}" cy="${cy+16}" rx="6" ry="4" fill="#8D6E63" opacity="0.25" transform="rotate(-10 ${cx-8} ${cy+16})"/>
         <ellipse cx="${cx+18}" cy="${cy+8}" rx="4" ry="6" fill="#8D6E63" opacity="0.25" transform="rotate(30 ${cx+18} ${cy+8})"/>
-        <!-- 眼睛 -->
         <ellipse cx="${cx-12}" cy="${cy-4}" rx="6" ry="8" fill="#fff" stroke="#5D4037" stroke-width="0.8"/>
         <ellipse cx="${cx+12}" cy="${cy-4}" rx="6" ry="8" fill="#fff" stroke="#5D4037" stroke-width="0.8"/>
         <circle cx="${cx-11}" cy="${cy-3}" r="3.5" fill="#3E2723"/>
         <circle cx="${cx+13}" cy="${cy-3}" r="3.5" fill="#3E2723"/>
         <circle cx="${cx-10}" cy="${cy-4}" r="1" fill="#fff"/>
         <circle cx="${cx+14}" cy="${cy-4}" r="1" fill="#fff"/>
-        <!-- 睫毛 -->
         <path d="M ${cx-18} ${cy-8} L ${cx-22} ${cy-12}" stroke="#5D4037" stroke-width="0.8" stroke-linecap="round"/>
         <path d="M ${cx+18} ${cy-8} L ${cx+22} ${cy-12}" stroke="#5D4037" stroke-width="0.8" stroke-linecap="round"/>
-        <!-- 腮红 -->
         <ellipse cx="${cx-20}" cy="${cy+4}" rx="5" ry="3" fill="url(#${uid}n)" opacity="0.6"/>
         <ellipse cx="${cx+20}" cy="${cy+4}" rx="5" ry="3" fill="url(#${uid}n)" opacity="0.6"/>
-        <!-- 鼻吻部 -->
         <ellipse cx="${cx}" cy="${cy+14}" rx="18" ry="12" fill="#FFECB3" stroke="#8D6E63" stroke-width="0.6" opacity="0.9"/>
-        <!-- 鼻孔 -->
         <ellipse cx="${cx-4}" cy="${cy+12}" rx="2.5" ry="1.8" fill="#8D6E63" opacity="0.5"/>
         <ellipse cx="${cx+4}" cy="${cy+12}" rx="2.5" ry="1.8" fill="#8D6E63" opacity="0.5"/>
-        <!-- 嘴巴 -->
         <path d="M ${cx-6} ${cy+18} Q ${cx} ${cy+22} ${cx+6} ${cy+18}" fill="none" stroke="#8D6E63" stroke-width="1.2" stroke-linecap="round"/>
-        <!-- 铃铛 -->
         <circle cx="${cx}" cy="${cy+26}" r="5" fill="url(#${uid}c)" stroke="#B76E00" stroke-width="0.6"/>
         <line x1="${cx}" y1="${cy+31}" x2="${cx}" y2="${cy+34}" stroke="#B76E00" stroke-width="0.6"/>
-        <!-- 中心文字 -->
         <text x="${cx}" y="${cy+2}" text-anchor="middle" font-size="${fontSize}" font-weight="800" fill="#fff" class="kapok-text" style="paint-order: stroke; stroke: #5D4037; stroke-width: 0.5;">${centerText}</text>
       </svg>
     `;
   }
 
-  // ---- 可爱小狮子 SVG（佛山专用）----
+  // ---- 超可爱小狮子 SVG（佛山专用）----
   function cuteLionSVG(size, names) {
-    const cx = 50, cy = 52;
+    const cx = 50, cy = 50;
     const count = Array.isArray(names) ? names.length : 0;
     const uid = 'clion' + size + 'x' + count;
 
@@ -189,75 +147,72 @@
     else if (count === 3) { centerText = escapeHtml(names.map(n => String(n)[0]).join('')); fontSize = 8; }
     else { centerText = escapeHtml(names.slice(0, 3).map(n => String(n)[0]).join('')) + '+' + (count - 3); fontSize = 7; }
 
-    // 蓬松鬃毛 - 多个圆弧波浪
+    // 超可爱蓬松鬃毛 - 圆润波浪形
     let mane = '';
-    const manePoints = 20;
+    const manePoints = 16;
     for (let i = 0; i < manePoints; i++) {
       const a1 = (i / manePoints) * Math.PI * 2 - Math.PI / 2;
       const a2 = ((i + 1) / manePoints) * Math.PI * 2 - Math.PI / 2;
-      const r1 = 28, r2 = 38;
-      const x1 = cx + r1 * Math.cos(a1), y1 = cy + r1 * Math.sin(a1);
-      const x2 = cx + r2 * Math.cos((a1 + a2) / 2), y2 = cy + r2 * Math.sin((a1 + a2) / 2);
-      const x3 = cx + r1 * Math.cos(a2), y3 = cy + r1 * Math.sin(a2);
-      const color = i % 3 === 0 ? '#FFD54F' : (i % 3 === 1 ? '#FFB300' : '#FF8F00');
-      mane += `<path d="M ${x1.toFixed(1)} ${y1.toFixed(1)} Q ${x2.toFixed(1)} ${y2.toFixed(1)} ${x3.toFixed(1)} ${y3.toFixed(1)}" fill="${color}" stroke="#E65100" stroke-width="0.3" opacity="0.92"/>`;
+      const mid = (a1 + a2) / 2;
+      const rIn = 25, rOut = 36;
+      const x1 = cx + rIn * Math.cos(a1), y1 = cy + rIn * Math.sin(a1);
+      const x2 = cx + rOut * Math.cos(mid), y2 = cy + rOut * Math.sin(mid);
+      const x3 = cx + rIn * Math.cos(a2), y3 = cy + rIn * Math.sin(a2);
+      const colors = ['#FFCC02', '#FFB300', '#FF9800', '#FF8F00'];
+      const color = colors[i % colors.length];
+      mane += `<path d="M ${x1.toFixed(1)} ${y1.toFixed(1)} Q ${x2.toFixed(1)} ${y2.toFixed(1)} ${x3.toFixed(1)} ${y3.toFixed(1)}" fill="${color}" stroke="#E65100" stroke-width="0.4" opacity="0.95"/>`;
     }
 
     return `
-      <svg width="${size}" height="${size}" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 3px 4px rgba(255,143,0,0.35));">
+      <svg width="${size}" height="${size}" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 4px 6px rgba(255,143,0,0.3));">
         <defs>
-          <radialGradient id="${uid}f" cx="50%" cy="40%">
-            <stop offset="0%" stop-color="#FFECB3"/>
-            <stop offset="60%" stop-color="#FFD54F"/>
-            <stop offset="100%" stop-color="#FFB300"/>
-          </radialGradient>
-          <radialGradient id="${uid}c" cx="50%" cy="50%">
-            <stop offset="0%" stop-color="#FFF9C4"/>
-            <stop offset="100%" stop-color="#FFEB3B"/>
-          </radialGradient>
+          <radialGradient id="${uid}f" cx="50%" cy="40%"><stop offset="0%" stop-color="#FFF8E1"/><stop offset="50%" stop-color="#FFE082"/><stop offset="100%" stop-color="#FFD54F"/></radialGradient>
+          <radialGradient id="${uid}e" cx="50%" cy="30%"><stop offset="0%" stop-color="#FFECB3"/><stop offset="100%" stop-color="#FFCA28"/></radialGradient>
+          <radialGradient id="${uid}c" cx="50%" cy="50%"><stop offset="0%" stop-color="#FFF9C4"/><stop offset="100%" stop-color="#FFEB3B"/></radialGradient>
+          <radialGradient id="${uid}blush" cx="50%" cy="50%"><stop offset="0%" stop-color="#FFAB91"/><stop offset="100%" stop-color="#FF8A65"/></radialGradient>
         </defs>
         ${mane}
         <!-- 圆耳朵 -->
-        <circle cx="${cx-22}" cy="${cy-22}" r="10" fill="#FFD54F" stroke="#E65100" stroke-width="0.8"/>
-        <circle cx="${cx+22}" cy="${cy-22}" r="10" fill="#FFD54F" stroke="#E65100" stroke-width="0.8"/>
-        <circle cx="${cx-22}" cy="${cy-22}" r="5" fill="#FFCC80" opacity="0.8"/>
-        <circle cx="${cx+22}" cy="${cy-22}" r="5" fill="#FFCC80" opacity="0.8"/>
+        <circle cx="${cx-24}" cy="${cy-20}" r="11" fill="url(#${uid}e)" stroke="#E65100" stroke-width="1"/>
+        <circle cx="${cx+24}" cy="${cy-20}" r="11" fill="url(#${uid}e)" stroke="#E65100" stroke-width="1"/>
+        <circle cx="${cx-24}" cy="${cy-20}" r="6" fill="#FFCC80" opacity="0.9"/>
+        <circle cx="${cx+24}" cy="${cy-20}" r="6" fill="#FFCC80" opacity="0.9"/>
         <!-- 圆脸 -->
-        <ellipse cx="${cx}" cy="${cy}" rx="28" ry="26" fill="url(#${uid}f)" stroke="#E65100" stroke-width="1.2"/>
+        <ellipse cx="${cx}" cy="${cy+2}" rx="30" ry="28" fill="url(#${uid}f)" stroke="#E65100" stroke-width="1.2"/>
         <!-- 大眼睛 -->
-        <ellipse cx="${cx-11}" cy="${cy-2}" rx="10" ry="11" fill="#fff" stroke="#E65100" stroke-width="0.8"/>
-        <ellipse cx="${cx+11}" cy="${cy-2}" rx="10" ry="11" fill="#fff" stroke="#E65100" stroke-width="0.8"/>
+        <ellipse cx="${cx-12}" cy="${cy-2}" rx="11" ry="12" fill="#fff" stroke="#E65100" stroke-width="1"/>
+        <ellipse cx="${cx+12}" cy="${cy-2}" rx="11" ry="12" fill="#fff" stroke="#E65100" stroke-width="1"/>
         <!-- 瞳孔 -->
-        <circle cx="${cx-10}" cy="${cy-1}" r="5.5" fill="#3E2723"/>
-        <circle cx="${cx+12}" cy="${cy-1}" r="5.5" fill="#3E2723"/>
-        <circle cx="${cx-8}" cy="${cy-3}" r="2" fill="#fff" opacity="0.9"/>
-        <circle cx="${cx+14}" cy="${cy-3}" r="2" fill="#fff" opacity="0.9"/>
-        <!-- 小三角鼻 -->
-        <polygon points="${cx-4},${cy+6} ${cx+4},${cy+6} ${cx},${cy+12}" fill="#FF8A65" stroke="#E65100" stroke-width="0.6"/>
+        <circle cx="${cx-11}" cy="${cy-1}" r="6" fill="#3E2723"/>
+        <circle cx="${cx+13}" cy="${cy-1}" r="6" fill="#3E2723"/>
+        <!-- 高光 -->
+        <circle cx="${cx-8}" cy="${cy-4}" r="2.5" fill="#fff" opacity="0.95"/>
+        <circle cx="${cx+16}" cy="${cy-4}" r="2.5" fill="#fff" opacity="0.95"/>
+        <circle cx="${cx-14}" cy="${cy+2}" r="1.5" fill="#fff" opacity="0.7"/>
+        <circle cx="${cx+10}" cy="${cy+2}" r="1.5" fill="#fff" opacity="0.7"/>
         <!-- 腮红 -->
-        <ellipse cx="${cx-18}" cy="${cy+8}" rx="5" ry="3" fill="#FFAB91" opacity="0.5"/>
-        <ellipse cx="${cx+18}" cy="${cy+8}" rx="5" ry="3" fill="#FFAB91" opacity="0.5"/>
+        <ellipse cx="${cx-20}" cy="${cy+8}" rx="7" ry="4" fill="url(#${uid}blush)" opacity="0.45"/>
+        <ellipse cx="${cx+20}" cy="${cy+8}" rx="7" ry="4" fill="url(#${uid}blush)" opacity="0.45"/>
+        <!-- 小鼻子 -->
+        <ellipse cx="${cx}" cy="${cy+8}" rx="5" ry="4" fill="#FF8A65" stroke="#E65100" stroke-width="0.5"/>
         <!-- 微笑嘴 -->
-        <path d="M ${cx-10} ${cy+16} Q ${cx} ${cy+22} ${cx+10} ${cy+16}" fill="none" stroke="#E65100" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M ${cx-10} ${cy+16} Q ${cx} ${cy+22} ${cx+10} ${cy+16}" fill="none" stroke="#E65100" stroke-width="1.8" stroke-linecap="round"/>
+        <!-- 小舌头 -->
+        <ellipse cx="${cx+3}" cy="${cy+19}" rx="4" ry="2.5" fill="#FF8A80" opacity="0.7"/>
         <!-- 中心圆 -->
-        <circle cx="${cx}" cy="${cy-2}" r="12" fill="url(#${uid}c)" stroke="#E65100" stroke-width="0.8" opacity="0.9"/>
+        <circle cx="${cx}" cy="${cy-2}" r="13" fill="url(#${uid}c)" stroke="#E65100" stroke-width="0.8" opacity="0.95"/>
         <!-- 中心文字 -->
         <text x="${cx}" y="${cy+2}" text-anchor="middle" font-size="${fontSize}" font-weight="800" fill="#E65100" class="kapok-text">${centerText}</text>
       </svg>
     `;
   }
 
-  // 根据当前城市选择标记 SVG
   function markerSVG(size, names) {
-    if (Store.currentCity === 'foshan') {
-      return cuteLionSVG(size, names);
-    } else if (Store.currentCity === 'shenzhen') {
-      return calfSVG(size, names);
-    }
+    if (Store.currentCity === 'foshan') return cuteLionSVG(size, names);
+    if (Store.currentCity === 'shenzhen') return calfSVG(size, names);
     return kapokSVG(size, names);
   }
 
-  // ---- 工具 ----
   function escapeHtml(str) {
     return (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
@@ -269,7 +224,6 @@
     return prices.reduce((a, b) => a + b, 0) / prices.length;
   }
 
-  // ---- 初始化地图 ----
   function initMap() {
     const city = CITY_CENTERS[Store.currentCity] || CITY_CENTERS.guangzhou;
     const gcj = wgs84ToGcj02(city.center[1], city.center[0]);
@@ -280,22 +234,26 @@
       attribution: '\u00A9 \u9ad8\u5fb7\u5730\u56fe',
       maxZoom: 18,
     }).addTo(map);
-    // 绑定侧边栏关闭到地图点击
+
+    // 地图点击关闭侧边栏（但在选点模式下处理选点）
     map.on('click', (e) => {
       if (isPickMode) {
         handleMapPick(e);
       } else {
-        document.getElementById('sidebar').classList.remove('show');
+        closeSidebar();
       }
     });
   }
 
-  // ---- 渲染标记 ----
+  function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('show');
+    currentSpotId = null;
+  }
+
   async function renderMarkers(filterText = '') {
     const data = Store.data;
     const lower = (filterText || '').toLowerCase();
 
-    // 先移除所有旧标记
     Object.values(markers).forEach(m => map.removeLayer(m));
     markers = {};
 
@@ -326,14 +284,14 @@
       marker.bindPopup(createMiniPopup(spot), {
         closeButton: false, offset: [0, -size / 2 + 4],
       });
-      marker.on('click', () => {
+      marker.on('click', (e) => {
+        L.DomEvent.stopPropagation(e);
         marker.openPopup();
         showSidebar(spot.id);
       });
       marker.addTo(map);
       markers[spot.id] = marker;
 
-      // 动画：新标记弹跳
       setTimeout(() => {
         const el = marker.getElement();
         if (el) {
@@ -345,20 +303,21 @@
     });
   }
 
-  // ---- 小弹窗 ----
   function createMiniPopup(spot) {
     const count = spot.recommendations.length;
     const avgPrice = avgPriceOf(spot);
     const catColor = (CATEGORIES && CATEGORIES[spot.category]) || '#607D8B';
     const personNames = spot.recommendations.map(r => escapeHtml(r.person)).join('、');
-    const priceStr = avgPrice > 0 ? ' &middot; \u00A5' + Math.round(avgPrice) + '/人' : '';
+    const priceStr = avgPrice > 0 ? ' \u00B7 \u00A5' + Math.round(avgPrice) + '/人' : '';
+    const wtgCount = (spot.wantToGo || []).length;
+    const wtgStr = wtgCount > 0 ? ` \u00B7 \u{1F3AF} ${wtgCount}人想去` : '';
 
     return `
       <div class="mini-popup">
         <div class="mini-popup-name">${escapeHtml(spot.name)}</div>
         <div class="mini-popup-meta">
           <span style="color:${catColor};font-weight:600">${escapeHtml(spot.category)}</span>
-          ${priceStr}
+          ${priceStr}${wtgStr}
         </div>
         <div class="mini-popup-persons">${personNames}\u63A8\u8350</div>
         <button class="mini-popup-btn" onclick="window.__showDetail(${spot.id})">\u67E5\u770B\u8BE6\u60C5</button>
@@ -366,10 +325,11 @@
     `;
   }
 
-  // ---- 侧边栏详情 ----
+  // ---- 侧边栏详情（增强版）----
   function showSidebar(spotId) {
     const spot = Store.data.spots.find(s => s.id === spotId);
     if (!spot) return;
+    currentSpotId = spotId;
 
     const body = document.getElementById('sidebarBody');
     const count = spot.recommendations.length;
@@ -377,6 +337,9 @@
     const catColor = (CATEGORIES && CATEGORIES[spot.category]) || '#607D8B';
     const persons = Store.getAllPersons();
     const personNames = spot.recommendations.map(r => escapeHtml(r.person)).join('、');
+    const wantToGo = spot.wantToGo || [];
+    const wtgCount = wantToGo.length;
+    const comments = spot.comments || [];
 
     let html = `
       <div class="spot-detail-name">${escapeHtml(spot.name)}</div>
@@ -397,6 +360,31 @@
       </div>
     `;
 
+    // ---- 想去的人 ----
+    html += `
+      <div class="want-to-go-section">
+        <div class="wtg-header">
+          <span class="wtg-icon">\u{1F3AF}</span>
+          <span class="wtg-title">${wtgCount > 0 ? wtgCount + '人想去这里' : '想去这里'}</span>
+        </div>
+    `;
+    if (wtgCount > 0) {
+      html += '<div class="wtg-names">';
+      wantToGo.forEach(name => {
+        const color = persons[name] || '#999';
+        html += `<span class="wtg-name" style="background:${color}">${escapeHtml(name)}</span>`;
+      });
+      html += '</div>';
+    }
+    html += `
+        <div class="wtg-input-row">
+          <input type="text" id="wtgInput" placeholder="输入你的名字..." maxlength="20">
+          <button class="wtg-btn" id="wtgBtn" onclick="window.__addWantToGo()">\u{1F3AF} 想去</button>
+        </div>
+      </div>
+    `;
+
+    // ---- 推荐详情 ----
     html += '<div class="detail-section-title">推荐详情</div>';
 
     spot.recommendations.forEach((rec, idx) => {
@@ -423,6 +411,38 @@
       `;
     });
 
+    // ---- 互动评论区 ----
+    html += '<div class="detail-section-title">\u{1F4AC} 互动留言</div>';
+
+    if (comments.length > 0) {
+      html += '<div class="comments-list">';
+      comments.forEach(c => {
+        html += `
+          <div class="comment-item">
+            <div class="comment-header">
+              <span class="comment-author">${escapeHtml(c.author || '匿名')}</span>
+              <span class="comment-time">${c.date || ''}</span>
+            </div>
+            <div class="comment-body">${escapeHtml(c.content)}</div>
+          </div>
+        `;
+      });
+      html += '</div>';
+    } else {
+      html += '<div class="comments-empty">还没有留言，来抢沙发吧~</div>';
+    }
+
+    html += `
+      <div class="comment-form">
+        <input type="text" id="commentAuthor" placeholder="你的名字（选填）" maxlength="20" class="comment-input">
+        <textarea id="commentContent" placeholder="想说点什么...（选填）" rows="2" class="comment-textarea"></textarea>
+        <button class="btn btn-primary comment-submit" id="commentSubmitBtn" style="width:100%;justify-content:center" onclick="window.__addComment()">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+          发表留言
+        </button>
+      </div>
+    `;
+
     body.innerHTML = html;
     document.getElementById('sidebar').classList.add('show');
   }
@@ -436,12 +456,52 @@
     return html;
   }
 
-  // ---- Logo ----
+  // ---- 添加想去 ----
+  function addWantToGo() {
+    if (!currentSpotId) return;
+    const spot = Store.data.spots.find(s => s.id === currentSpotId);
+    if (!spot) return;
+    const input = document.getElementById('wtgInput');
+    const name = (input.value || '').trim();
+    if (!name) { showToast('请输入你的名字', 'error'); return; }
+
+    const current = spot.wantToGo || [];
+    if (current.includes(name)) { showToast('你已经标记过想去啦', 'error'); return; }
+
+    Store.addWantToGo(spot.name, name);
+    showSidebar(currentSpotId);
+    renderMarkers();
+    showToast('已标记想去！', 'success');
+  }
+
+  // ---- 添加评论 ----
+  function addComment() {
+    if (!currentSpotId) return;
+    const spot = Store.data.spots.find(s => s.id === currentSpotId);
+    if (!spot) return;
+
+    const authorInput = document.getElementById('commentAuthor');
+    const contentInput = document.getElementById('commentContent');
+    const author = (authorInput.value || '').trim() || '匿名';
+    const content = (contentInput.value || '').trim();
+    if (!content) { showToast('请输入留言内容', 'error'); return; }
+
+    const comment = {
+      id: Date.now(),
+      author,
+      content,
+      date: new Date().toISOString().split('T')[0],
+    };
+
+    Store.addComment(spot.name, comment);
+    showSidebar(currentSpotId);
+    showToast('留言发表成功！', 'success');
+  }
+
   function renderLogo() {
     document.getElementById('logoIcon').innerHTML = eatingLogoSVG(34);
   }
 
-  // ---- 图例 ----
   function renderLegend() {
     const data = Store.data;
     const persons = data.persons || {};
@@ -454,7 +514,6 @@
     el.innerHTML = html || '<div class="legend-item" style="opacity:0.6">\u6682\u65e0\u63a8\u8350\u4eba</div>';
   }
 
-  // ---- 城市切换 ----
   async function switchCity(city) {
     if (!CITY_CONFIGS[city]) return;
     const config = CITY_CONFIGS[city];
@@ -465,20 +524,15 @@
     map.flyTo([gcj.lat, gcj.lng], config.zoom, { duration: 0.8 });
     renderMarkers();
     renderLegend();
-    document.getElementById('sidebar').classList.remove('show');
+    closeSidebar();
     document.getElementById('citySubtitle').textContent = config.name + ' · 吃好喝好长生不老';
-    // 重置表单定位
     pickedLocation = null;
     updateLocationDisplay();
   }
 
-  // ---- 地址搜索（Photon API）----
   async function performAddressSearch() {
     const address = document.getElementById('spotAddress').value.trim();
-    if (!address) {
-      showHint('请先输入地址');
-      return;
-    }
+    if (!address) { showHint('请先输入地址'); return; }
 
     const btn = document.getElementById('searchAddrBtn');
     const originalText = btn.innerHTML;
@@ -496,19 +550,8 @@
         const [lng, lat] = best.geometry.coordinates;
         pickedLocation = { lat, lng };
         updateLocationDisplay();
-
-        // 移动地图到该位置
         const gcj = wgs84ToGcj02(lng, lat);
         map.flyTo([gcj.lat, gcj.lng], 16, { duration: 0.6 });
-
-        // 如果地址输入框为空或只是城市名，尝试用返回的地址填充
-        const props = best.properties;
-        const returnedAddr = [props.street, props.district, props.city, props.state]
-          .filter(Boolean).join('，');
-        if (returnedAddr && !document.getElementById('spotAddress').value.includes(props.street || '')) {
-          // 不自动覆盖用户输入，只在用户输入很简短时补充
-        }
-
         showToast('定位成功', 'success');
       } else {
         showToast('未找到该地址，请尝试更详细的描述', 'error');
@@ -522,7 +565,6 @@
     }
   }
 
-  // ---- 地图选点 ----
   function enterPickMode() {
     isPickMode = true;
     document.getElementById('addHint').classList.add('show');
@@ -556,7 +598,6 @@
     }
   }
 
-  // ---- 评分选择 ----
   function setupStarPicker() {
     const picker = document.getElementById('starPicker');
     const stars = picker.querySelectorAll('.star');
@@ -568,7 +609,6 @@
     });
   }
 
-  // ---- 表单提交 ----
   async function submitRecommendation(e) {
     e.preventDefault();
 
@@ -588,12 +628,10 @@
     const dishes = dishesStr ? dishesStr.split(/[,，]/).map(d => d.trim()).filter(Boolean) : [];
     const today = new Date().toISOString().split('T')[0];
 
-    // 检查是否已有同名店铺
     const existing = Store.findSpotByName(name);
     let spotData;
 
     if (existing && existing.name === name) {
-      // 追加到已有店铺
       spotData = {
         id: existing.id,
         name: existing.name,
@@ -602,28 +640,20 @@
         lng: existing.lng || pickedLocation.lng,
         category: existing.category || category,
         recommendations: [{
-          person,
-          dishes,
-          review,
-          price,
+          person, dishes, review, price,
           rating: starRating || undefined,
           date: today,
         }],
       };
     } else {
-      // 新建店铺
       spotData = {
         id: Date.now(),
-        name,
-        address,
+        name, address,
         lat: pickedLocation.lat,
         lng: pickedLocation.lng,
         category,
         recommendations: [{
-          person,
-          dishes,
-          review,
-          price,
+          person, dishes, review, price,
           rating: starRating || undefined,
           date: today,
         }],
@@ -632,7 +662,6 @@
 
     Store.addLocalSpot(spotData);
 
-    // 重置表单
     document.getElementById('addForm').reset();
     pickedLocation = null;
     starRating = 0;
@@ -640,11 +669,9 @@
     updateLocationDisplay();
     showHint('');
 
-    // 刷新地图
     renderMarkers();
     renderLegend();
 
-    // 移动地图到新位置
     const gcj = wgs84ToGcj02(spotData.lng, spotData.lat);
     map.flyTo([gcj.lat, gcj.lng], 16, { duration: 0.6 });
 
@@ -654,12 +681,9 @@
   function showHint(msg) {
     const el = document.getElementById('formHint');
     el.textContent = msg;
-    if (msg) {
-      el.style.color = 'var(--kapok)';
-    }
+    if (msg) el.style.color = 'var(--kapok)';
   }
 
-  // ---- 导出数据 ----
   function exportData() {
     const json = Store.exportData();
     const blob = new Blob([json], { type: 'application/json' });
@@ -674,7 +698,6 @@
     showToast('数据已导出，请上传到 GitHub 仓库', 'success');
   }
 
-  // ---- 清空本地数据 ----
   function clearLocalData() {
     if (!confirm('确定要清空当前城市的本地添加数据吗？此操作不可恢复。')) return;
     Store.clearLocalData();
@@ -683,30 +706,22 @@
     showToast('本地数据已清空', 'success');
   }
 
-  // ---- 事件绑定 ----
   function setupEvents() {
-    // 城市切换
     document.querySelectorAll('.city-tab').forEach(tab => {
       tab.addEventListener('click', () => switchCity(tab.dataset.city));
     });
 
-    // 搜索框
     document.getElementById('searchInput').addEventListener('input', (e) => {
       renderMarkers(e.target.value);
     });
 
-    // 侧边栏关闭
-    document.getElementById('closeSidebar').addEventListener('click', () => {
-      document.getElementById('sidebar').classList.remove('show');
-    });
+    document.getElementById('closeSidebar').addEventListener('click', closeSidebar);
 
-    // 左侧面板收起/展开
     const collapseBtn = document.getElementById('collapsePanelBtn');
     collapseBtn.addEventListener('click', () => {
       document.body.classList.toggle('panel-collapsed');
     });
 
-    // 菜单
     const menuBtn = document.getElementById('menuBtn');
     const menuDropdown = document.getElementById('menuDropdown');
     menuBtn.addEventListener('click', (e) => {
@@ -715,7 +730,6 @@
     });
     document.addEventListener('click', () => menuDropdown.classList.remove('show'));
 
-    // 刷新数据
     document.getElementById('refreshMenuBtn').addEventListener('click', async () => {
       await Store.refresh();
       renderMarkers();
@@ -723,32 +737,24 @@
       showToast('数据已刷新', 'success');
     });
 
-    // 导出数据
     document.getElementById('exportMenuBtn').addEventListener('click', exportData);
-
-    // 清空本地数据
     document.getElementById('clearLocalMenuBtn').addEventListener('click', clearLocalData);
-
-    // 表单提交
     document.getElementById('addForm').addEventListener('submit', submitRecommendation);
-
-    // 地址搜索
     document.getElementById('searchAddrBtn').addEventListener('click', performAddressSearch);
-
-    // 地图选点
     document.getElementById('pickMapBtn').addEventListener('click', enterPickMode);
     document.getElementById('cancelPickBtn').addEventListener('click', exitPickMode);
-
-    // 评分选择
     setupStarPicker();
 
-    // 图例收起/展开
     document.getElementById('legendHeader').addEventListener('click', () => {
       document.getElementById('legend').classList.toggle('collapsed');
     });
+
+    // 阻止侧边栏内部点击冒泡到地图
+    document.getElementById('sidebar').addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
   }
 
-  // ---- Toast ----
   function showToast(msg, type = 'info') {
     const el = document.getElementById('toast');
     el.className = 'toast ' + type;
@@ -757,7 +763,6 @@
     setTimeout(() => el.classList.remove('show'), 2500);
   }
 
-  // ---- 初始化 ----
   async function init() {
     initMap();
     renderLogo();
@@ -767,8 +772,9 @@
     setupEvents();
   }
 
-  // 全局暴露
   window.__showDetail = showSidebar;
+  window.__addWantToGo = addWantToGo;
+  window.__addComment = addComment;
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);

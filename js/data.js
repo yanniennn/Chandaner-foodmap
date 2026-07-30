@@ -126,21 +126,42 @@ const Store = {
   // 合并 GitHub 数据和本地增量
   _rebuildData() {
     const persons = { ...(this._githubData.persons || {}), ...(this._localData.persons || {}) };
-    const spots = [...(this._githubData.spots || [])];
+    const spots = JSON.parse(JSON.stringify(this._githubData.spots || []));
     const githubNames = new Set(spots.map(s => s.name));
 
     (this._localData.spots || []).forEach(ls => {
       if (githubNames.has(ls.name)) {
-        // 合并到已有店铺（追加本地新增的推荐）
+        // 合并到已有店铺
         const gs = spots.find(s => s.name === ls.name);
         if (gs) {
+          // 合并推荐
           const recNames = new Set(gs.recommendations.map(r => r.person));
-          ls.recommendations.forEach(r => {
+          (ls.recommendations || []).forEach(r => {
             if (!recNames.has(r.person)) {
               gs.recommendations.push(r);
               recNames.add(r.person);
             }
           });
+          // 合并想去
+          const wtgNames = new Set(gs.wantToGo || []);
+          (ls.wantToGo || []).forEach(name => {
+            if (!wtgNames.has(name)) {
+              gs.wantToGo = gs.wantToGo || [];
+              gs.wantToGo.push(name);
+              wtgNames.add(name);
+            }
+          });
+          // 合并评论
+          if (ls.comments && ls.comments.length > 0) {
+            gs.comments = gs.comments || [];
+            const existingIds = new Set(gs.comments.map(c => c.id));
+            ls.comments.forEach(c => {
+              if (!existingIds.has(c.id)) {
+                gs.comments.push(c);
+                existingIds.add(c.id);
+              }
+            });
+          }
           if (ls.address && (!gs.address || gs.address === '地址未填写')) gs.address = ls.address;
           if (ls.lat && ls.lng) {
             gs.lat = ls.lat;
@@ -229,7 +250,54 @@ const Store = {
     return JSON.stringify(this.data, null, 2);
   },
 
-  // 清空本地增量数据
+  // 添加想去的人
+  addWantToGo(spotName, personName) {
+    const ls = this._localData.spots.find(s => s.name === spotName);
+    if (ls) {
+      if (!ls.wantToGo) ls.wantToGo = [];
+      if (!ls.wantToGo.includes(personName)) {
+        ls.wantToGo.push(personName);
+      }
+    } else {
+      const gs = (this._githubData.spots || []).find(s => s.name === spotName);
+      if (gs) {
+        this._localData.spots.push({
+          name: spotName,
+          wantToGo: [personName],
+        });
+      }
+    }
+    this._saveLocal();
+    this._rebuildData();
+  },
+
+  // 添加评论
+  addComment(spotName, commentData) {
+    const ls = this._localData.spots.find(s => s.name === spotName);
+    if (ls) {
+      if (!ls.comments) ls.comments = [];
+      ls.comments.push(commentData);
+    } else {
+      const gs = (this._githubData.spots || []).find(s => s.name === spotName);
+      if (gs) {
+        this._localData.spots.push({
+          name: spotName,
+          comments: [commentData],
+        });
+      }
+    }
+    this._saveLocal();
+    this._rebuildData();
+  },
+
+  _saveLocal() {
+    this._localData.lastModified = Date.now();
+    try {
+      localStorage.setItem(`chandaner_local_${this.currentCity}`, JSON.stringify(this._localData));
+    } catch (e) {
+      console.error('保存本地数据失败:', e);
+    }
+  },
   clearLocalData() {
     this._localData = { persons: {}, spots: [], lastModified: 0 };
     try {
